@@ -32,19 +32,19 @@ DBGdetector::DBGdetector(){
 	
 }
 int DBGdetector::detect_debugger(){
-	if (!detect_api()){
+	if (detect_api()){
 		return 1;
 	}
-	if (!detect_flags()){
+	if (detect_flags()){
 		return 2;
 	}
-	if (!detect_hardware()){
+	if (detect_hardware()){
 		return 3;
 	}
-	if (!detect_exception()){
+	if (detect_exception()){
 		return 4;
 	}
-	if (!detect_timing()){
+	if (detect_timing()){
 		return 5;
 	}
 	
