@@ -4,10 +4,9 @@
 
 
 class DBGdetector{
-	private:
-		BOOL WINAPI IsDebuggerPresent(void);
 	public:
-		DBGdetector();
+		
+		void detector();
 
 		//main hub for five detectors
 		int detect_debugger();

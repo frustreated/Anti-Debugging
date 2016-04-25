@@ -1,7 +1,7 @@
 #include "dbgdetector.h"
 using namespace std;
-
-DBGdetector::DBGdetector(){
+BOOL WINAPI IsDebuggerPresent(void);
+void DBGdetector::detector(){
 	int check = detect_debugger();
 	string message = "Debugger detected! \n";
 	switch (check){
@@ -29,15 +29,14 @@ DBGdetector::DBGdetector(){
 			cout << "Normal Execution." << endl;
 			break;
 	}
-	
 }
 int DBGdetector::detect_debugger(){
-	if (detect_api()){
+	/*if (detect_api()){
 		return 1;
 	}
 	if (detect_flags()){
 		return 2;
-	}
+	}*/
 	if (detect_hardware()){
 		return 3;
 	}
@@ -66,17 +65,73 @@ bool DBGdetector::detect_api(){
 }
 
 bool DBGdetector::detect_flags(){
-	return true;
+	/*__asm{ 
+		mov eax, fs:[0x18]
+		mov eax, [eax+0x30]
+		mov eax, [eax+0x68]
+		test eax, 0x70
+		jz  nodebugger
+	}*/
+	unsigned long NTGlobalFlags = 0;
+
+	__asm{
+		mov eax, fs:[30h]
+		mov eax, [eax + 68h]
+		mov NTGlobalFlags, eax
+	}
+
+	if (NTGlobalFlags & 0x70){
+		return true;
+	}
+	return false;
 }
 
 bool DBGdetector::detect_hardware(){
-	return true;
+	unsigned int NumBps = 0;
+
+	CONTEXT context;
+	ZeroMemory(&context, sizeof(CONTEXT));
+
+	context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+	HANDLE hThread = GetCurrentThread();
+
+	if (GetThreadContext(hThread, &context) == 0)
+		NumBps = -1;
+
+	if (context.Dr0 != 0)
+		NumBps++;
+	if (context.Dr1 != 0)
+		NumBps++;
+	if (context.Dr2 != 0)
+		NumBps++;
+	if (context.Dr3 != 0)
+		NumBps++;
+
+	if (NumBps > 0)
+		return true;
+	return false;
 }
 
 bool DBGdetector::detect_exception(){
-	return true;
+	return false;
 }
 
 bool DBGdetector::detect_timing(){
-	return true;
+	long timing = -100; // reasonalbe amount of buffer time
+	DWORD start = GetTickCount();
+	int j = 0;
+	__asm{
+		xor ebx, ebx
+	}
+	for (int i = 0; i < 5000; i++){
+		for (int k = 0; k < 5000; k++){
+			j++;
+		}
+	}
+	DWORD end = GetTickCount();
+	long diff = start-end;
+	if (diff < timing){
+		return true;
+	}
+	return false;
 }
